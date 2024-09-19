@@ -8,7 +8,8 @@
     "format": "biome format .",
     "build": "tsc",
     "test": "jest --verbose --no-cache --config jest.config.ts",
-    "ci": "npm run lint && npm run test "
+    "ci": "npm run lint && npm run test",
+    "prepublishOnly": "npm run build"
   },
   "main": "lib/index.js",
   "types": "lib/typescript/index.d.ts",
