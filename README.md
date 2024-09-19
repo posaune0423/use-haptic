@@ -4,8 +4,8 @@
   <a href="https://github.com/posaune0423/use-haptic/actions/workflows/ci.yml"> 
     <img alt="CI" src="https://github.com/posaune0423/use-haptic/actions/workflows/ci.yml/badge.svg" />
   </a>
-  <a href="https://www.npmjs.com/package/use-haptic">
-    <img alt="npm" src="https://img.shields.io/npm/v/use-haptic.svg" />
+  <a href="https://npmjs.com/package/use-haptic">
+    <img alt="npm" src="https://img.shields.io/npm/d18m/use-haptic" />
   </a>
   <a href="https://npmjs.org/package/use-haptic">
     <img alt="downloads" src="https://badgen.net/npm/dm/use-haptic" />
