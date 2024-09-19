@@ -25,12 +25,7 @@
     "test": "jest --verbose --no-cache --config jest.config.ts",
     "ci": "pnpm run lint && pnpm run test && pnpm run build"
   },
-  "keywords": [
-    "react-hooks",
-    "react",
-    "haptic",
-    "vibration"
-  ],
+  "keywords": ["react-hooks", "react", "haptic", "vibration"],
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/posaune0423/use-haptic.git"
@@ -40,9 +35,7 @@
   "bugs": {
     "url": "https://github.com/posaune0423/use-haptic/issues"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "engines": {
     "node": ">=20.12.0"
   },
