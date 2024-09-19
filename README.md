@@ -70,4 +70,4 @@ function VibrationButton() {
 
 ## License
 
-MIT
+[MIT](./LICENSE)
