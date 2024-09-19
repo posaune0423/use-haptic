@@ -1,6 +1,6 @@
 {
   "name": "use-haptic",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Hooks for Haptic Feedback for mobile web",
   "scripts": {
     "lint": "biome check .",
