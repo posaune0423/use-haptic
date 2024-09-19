@@ -10,6 +10,7 @@
     "jsx": "react-jsx",
     "strict": true,
     "declaration": true,
+    "declarationDir": "dist",
     "isolatedModules": false
   },
   "include": ["src/"],

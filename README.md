@@ -1,17 +1,17 @@
 # use-haptic
 
 <div align="center">
+  <a href="https://github.com/posaune0423/use-haptic/actions/workflows/ci.yml"> 
+    <img alt="CI" src="https://github.com/posaune0423/use-haptic/actions/workflows/ci.yml/badge.svg" />
+  </a>
   <a href="https://www.npmjs.com/package/use-haptic">
-    <img alt="npm" src="https://img.shields.io/npm/v/use-haptic.svg?labelColor=49516F&color=8994BC" />
+    <img alt="npm" src="https://img.shields.io/npm/v/use-haptic.svg" />
   </a>
   <a href="https://npmjs.org/package/use-haptic">
-    <img alt="downloads" src="https://badgen.net/npm/dm/use-haptic?labelColor=49516F&color=8994BC" />
-  </a>
-  <a href="https://bundlephobia.com/result?p=use-haptic">
-    <img alt="tree-shakeable" src="https://badgen.net/bundlephobia/tree-shaking/use-haptic?labelColor=49516F&color=8994BC" />
-  </a>
+    <img alt="downloads" src="https://badgen.net/npm/dm/use-haptic" />
+  </a>  
   <a href="https://npmjs.org/package/use-haptic">
-    <img alt="types included" src="https://badgen.net/npm/types/use-haptic?labelColor=49516F&color=8994BC" />
+    <img alt="types included" src="https://badgen.net/npm/types/use-haptic" />
   </a>
 </div>
 
