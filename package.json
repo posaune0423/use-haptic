@@ -13,19 +13,9 @@
   },
   "main": "lib/index.js",
   "types": "lib/typescript/index.d.ts",
-  "files": [
-    "/src",
-    "/dist",
-    "/README.md",
-    "/LICENSE"
-  ],
+  "files": ["/src", "/dist", "/README.md", "/LICENSE"],
   "license": "MIT",
-  "keywords": [
-    "react-hooks",
-    "react",
-    "haptic",
-    "vibration"
-  ],
+  "keywords": ["react-hooks", "react", "haptic", "vibration"],
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/posaune0423/use-haptic.git"
