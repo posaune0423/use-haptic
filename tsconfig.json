@@ -5,12 +5,11 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "node",
-    "lib": ["ESNext", "DOM"],
+    "lib": ["es5", "es2015", "dom"],
     "jsx": "react",
     "declaration": true,
     "isolatedModules": false,
-    "types": ["@types/jest"]
   },
-  "include": ["src/**/*", "setupTests.ts"],
+  "include": ["src/"],
   "exclude": ["node_modules", "test", "sample"]
 }
