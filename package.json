@@ -1,0 +1,62 @@
+{
+  "name": "use-haptic",
+  "version": "1.0.0",
+  "description": "Hooks for Haptic Feedback for mobile web",
+  "source": "src/index.ts",
+  "main": "dist/index.js",
+  "module": "dist/index.module.js",
+  "esmodule": "dist/index.mjs",
+  "umd:main": "dist/index.umd.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "module": "./dist/index.module.js",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "lint": "biome check .",
+    "lint:fix": "biome check --fix .",
+    "format": "biome format .",
+    "build": "pnpm run build",
+    "test": "jest --verbose --no-cache --config jest.config.ts"
+  },
+  "keywords": ["react-hooks", "react", "haptic", "vibration"],
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/posaune0423/use-haptic.git"
+  },
+  "author": "Asuma Yamada(@posaune0423)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/posaune0423/use-haptic/issues"
+  },
+  "files": ["dist"],
+  "engines": {
+    "node": ">=20.12.0"
+  },
+  "peerDependencies": {
+    "react": "*"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.1",
+    "@testing-library/jest-dom": "^6.5.0",
+    "@testing-library/react": "^16.0.1",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/jest": "^29.5.13",
+    "@types/node": "^22.5.5",
+    "@types/react": "^18.3.7",
+    "@types/react-dom": "^18.3.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jsdom": "^25.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.2"
+  }
+}

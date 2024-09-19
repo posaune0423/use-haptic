@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "esModuleInterop": true,
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "lib": ["ESNext", "DOM"],
+    "jsx": "react",
+    "declaration": true,
+    "isolatedModules": false,
+    "types": ["@types/jest"]
+  },
+  "include": ["src/**/*", "setupTests.ts"],
+  "exclude": ["node_modules", "test", "sample"]
+}
