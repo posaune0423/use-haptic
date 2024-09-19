@@ -18,19 +18,6 @@
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
-.haptic-btn {
-  padding: 20px 30px;
-  font-size: 16px;
-  border-radius: 8px;
-  background-color: #646cff;
-  color: white;
-  font-weight: bold;
-}
-
-.haptic-btn:hover {
-  background-color: #535bbf;
-}
-
 @keyframes logo-spin {
   from {
     transform: rotate(0deg);
@@ -52,4 +39,11 @@
 
 .read-the-docs {
   color: #888;
+}
+
+main {
+  display: fixed;
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
 }

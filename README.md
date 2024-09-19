@@ -31,6 +31,32 @@ pnpm add use-haptic
 bun add use-haptic
 ```
 
+## Quick start
+
+```
+git clone https://github.com/posaune0423/use-haptic.git
+cd sample
+npm install
+npm run dev
+```
+
+And then, access the ip address displayed in the console by your iPhone.
+
+```bash
+> npm run dev
+
+> sample@0.0.0 dev
+> vite --host
+
+Port 5173 is in use, trying another one...
+
+VITE v5.4.6 ready in 102 ms
+
+➜ Local: http://localhost:5174/
+➜ Network: http://192.xxx.xx.xxx:5174/
+➜ press h + enter to show help
+```
+
 ## Usage
 
 ```tsx

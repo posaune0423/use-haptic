@@ -1,10 +1,9 @@
-import { useHaptic } from "use-haptic";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
+import { VibrationButton } from "./components/VibrationButton";
 
 function App() {
-  const { vibe } = useHaptic();
   return (
     <main>
       <div>
@@ -17,9 +16,7 @@ function App() {
       </div>
       <h1>Vite + React</h1>
 
-      <button className="haptic-btn" onClick={vibe}>
-        Click me
-      </button>
+      <VibrationButton />
 
       <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
     </main>
