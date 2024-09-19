@@ -2,21 +2,6 @@
   "name": "use-haptic",
   "version": "1.0.0",
   "description": "Hooks for Haptic Feedback for mobile web",
-  "source": "src/index.ts",
-  "main": "dist/index.js",
-  "module": "dist/index.module.js",
-  "esmodule": "dist/index.mjs",
-  "umd:main": "dist/index.umd.js",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "module": "./dist/index.module.js",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
-    },
-    "./package.json": "./package.json"
-  },
-  "sideEffects": false,
   "scripts": {
     "lint": "biome check .",
     "lint:fix": "biome check --fix .",
@@ -25,19 +10,28 @@
     "test": "jest --verbose --no-cache --config jest.config.ts",
     "ci": "pnpm run lint && pnpm run test && pnpm run build"
   },
-  "keywords": ["react-hooks", "react", "haptic", "vibration"],
+  "main": "lib/index.js",
+  "types": "lib/typescript/index.d.ts",
+  "files": [
+    "/src",
+    "/dist",
+    "/README.md",
+    "/LICENSE"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "react-hooks",
+    "react",
+    "haptic",
+    "vibration"
+  ],
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/posaune0423/use-haptic.git"
   },
   "author": "Asuma Yamada(@posaune0423)",
-  "license": "MIT",
   "bugs": {
     "url": "https://github.com/posaune0423/use-haptic/issues"
-  },
-  "files": ["dist"],
-  "engines": {
-    "node": ">=20.12.0"
   },
   "peerDependencies": {
     "react": "*"
