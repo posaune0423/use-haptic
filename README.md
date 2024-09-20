@@ -7,7 +7,7 @@
     <img src="https://img.shields.io/npm/v/use-haptic.svg" alt="npm package" />
   </a>
   <a href="https://npmjs.org/package/use-haptic">
-    <img alt="downloads" src="https://img.shields.io/npm/dm/use-haptic" />
+    <img alt="downloads" src="https://img.shields.io/npm/d18m/use-haptic" />
   </a>  
   <a href="https://npmjs.org/package/use-haptic">
     <img alt="types included" src="https://badgen.net/npm/types/use-haptic" />
