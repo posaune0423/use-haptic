@@ -20,7 +20,15 @@
   "nodeModulesDir": "auto",
   "exclude": [
     "coverage",
-    "node_modules"
+    "node_modules",
+    "npm",
+    ".agents",
+    ".claude",
+    ".codex",
+    ".cursor",
+    ".vscode",
+    "AGENTS.md",
+    "CLAUDE.md"
   ],
   "exports": "./src/mod.ts",
   "publish": {

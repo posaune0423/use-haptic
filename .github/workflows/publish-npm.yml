@@ -29,16 +29,29 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "Version extracted: $VERSION"
 
+      - name: Check npm version availability 🔎
+        id: npm_version
+        run: |
+          if npm view "use-haptic@${VERSION}" version >/dev/null 2>&1; then
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            echo "Version ${VERSION} already exists on npm. Skipping publish."
+          else
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build npm package 🔨
+        if: steps.npm_version.outputs.should_publish == 'true'
         run: deno run -A scripts/build_npm.ts ${{ env.VERSION }}
 
       - name: Setup Node.js 🔧
+        if: steps.npm_version.outputs.should_publish == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "22.x"
           registry-url: "https://registry.npmjs.org"
 
       - name: Publish to npm 🎁
+        if: steps.npm_version.outputs.should_publish == 'true'
         run: |
           cd npm
           npm publish --provenance --access public
