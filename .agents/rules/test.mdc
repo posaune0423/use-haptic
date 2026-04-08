@@ -1,0 +1,303 @@
+---
+alwaysApply: false
+---
+# Test Rules
+
+## 基本方針
+
+- testを通すことを目的としないで下さい。anyやunknownによってtestがpassしてもproductの品質が担保できていなかったり、specを満たしていなければ意味がありません。
+- テストの独立性を確保し、グローバル状態への依存を避けて下さい。
+- 型安全なモック実装を心がけ、必要な場合のみ型アサーションを使用して下さい。
+
+## Test Implementation Flow
+
+1. 境界値などを考慮しながら必要なビジネス要件をすべて満たす様にtest caseを過不足なく書き出す。
+2. 必ず`src/`以下の実装をimportしてtestコードを実行する。
+3. 外部依存は明示的にモックし、テスト実行順序に依存しないようにする。
+
+## Bun Test Mocking Best Practices
+
+### 型安全なモック実装
+
+参考: [Bun Test Mocks](https://bun.com/docs/test/mocks), [Mock Functions Guide](https://bun.com/docs/guides/test/mock-functions)
+
+#### ✅ 良い例: 完全な型定義でモックを作成
+
+```typescript
+import { mock } from "bun:test";
+
+interface UserService {
+  getUser(id: string): Promise<User>;
+  createUser(data: CreateUserData): Promise<User>;
+}
+
+// 型安全なモック
+const mockUserService: UserService = {
+  getUser: mock(async (id: string) => ({ id, name: "Test User" })),
+  createUser: mock(async (data: CreateUserData) => ({ id: "new-id", ...data })),
+};
+```
+
+#### ✅ 良い例: モックの呼び出し履歴を型安全にアクセス
+
+```typescript
+import { mock } from "bun:test";
+
+const mockGenerate = mock((request: ImageRequest) => Promise.resolve(ok({ imageBuffer: new ArrayBuffer(8) })));
+
+// 型アサーションで安全にアクセス
+const calls = mockGenerate.mock.calls as unknown as Array<[ImageRequest, unknown?]>;
+const request = calls[0]![0];
+
+// または安全なチェック
+const call = mockGenerate.mock.calls[0];
+if (call && call.length > 0 && call[0]) {
+  const request = call[0] as ImageRequest;
+  expect(request.referenceImageUrl).toBe("https://example.com/image.png");
+}
+```
+
+#### ❌ 悪い例: 型アサーションなしの直接アクセス
+
+```typescript
+// TypeScript エラーになる
+const request = mockGenerate.mock.calls[0][0]; // Type error!
+```
+
+### テストの独立性
+
+#### ⚠️ Bunのmock isolation問題と対策
+
+**重要**: Bunでは `mock`/`spyOn`/`mock.module()` がテストスイート間で漏れる既知の問題があります（[oven-sh/bun#6040](https://github.com/oven-sh/bun/issues/6040), [oven-sh/bun#12823](https://github.com/oven-sh/bun/issues/12823), [oven-sh/bun#7823](https://github.com/oven-sh/bun/issues/7823)）。  
+これにより、CIや `--randomize` で順序が変わるとテストが不安定になります。
+
+**対策チェックリスト**（実装時に必ず確認）:
+
+- [ ] **`tests/**`では`mock.module()` を使わない\*\*
+  - 例外: `tests/preload.ts` での import解決目的のみ（`cloudflare:workers`, `jose` browser build回避など）
+  - ビジネスロジックの差し替えには `spyOn` を使用
+
+- [ ] **spyOnでmockしたら `afterEach` で必ず restore**
+  - `mock.restore()` と `mock.clearAllMocks()` を呼ぶ
+  - `tests/mocks/**` のヘルパを使う場合は、各ヘルパの `restore*()` を `afterEach` で呼ぶ
+
+- [ ] **Promiseを返す関数は `mockResolvedValue`/`async` を維持**
+  - `mock(() => true)` ではなく `mock(async () => true)` または `mockResolvedValue(true)` を使用
+  - 型崩れ（`Promise<boolean>` → `boolean`）を防ぐ
+
+- [ ] **`global.fetch` 等のグローバルは direct代入せず `spyOn` で差し替え**
+  - `global.fetch = mock(...)` ではなく `setupFetchMock()` を使用
+  - `afterEach` で `restoreFetch()` を呼ぶ
+
+- [ ] **署名検証などの本質ロジックは、可能なら実装を通す**
+  - `verifySignature` を無条件 `true` でモックせず、`generateQuickNodeSignature()` で正しい署名を生成して実装を通す
+  - テストの意味を落とさない
+
+- [ ] **`tests/mocks/**` のヘルパを優先的に使用\*\*
+  - 既存のヘルパ（`setupLoggerMock`, `setupTelegramMock`, `setupGrammyMock` など）を活用
+  - 新しいモックが必要な場合は、`tests/mocks/` にspyOnベースのヘルパを追加
+
+- [ ] **`tests/setup.ts` は使わない（削除済み）**
+  - `tests/preload.ts` のみを使用（env/polyfill/import解決のみ）
+  - テストごとのセットアップは各テストファイルの `beforeEach`/`afterEach` で行う
+
+#### ⚠️ `mock.module()` はテスト間で共有される（詳細）
+
+Bun の `mock.module()` はプロセス全体に影響し、他のテストファイルにも波及します。  
+**unit テストで実装を直接検証したいモジュールは、integration テストで `mock.module()` しないでください。**
+
+```typescript
+// ❌ 悪い例: integration テストでグローバルにモック
+// tests/integration/app/gallery-page.integration.test.tsx
+mock.module("@/lib/glb-export-service", createGlbExportServiceMock());
+// → tests/unit/lib/glb-export-service.test.ts にも影響し、
+//   実装ではなくモックがテストされてしまう
+
+// ✅ 良い例: spyOnでモックし、afterEachでrestore
+import { setupLoggerMock, restoreLogger } from "../mocks/logger";
+
+beforeEach(() => {
+  setupLoggerMock();
+});
+
+afterEach(() => {
+  restoreLogger(); // 必ずrestore
+});
+```
+
+#### ✅ 良い例: 明示的なパラメータ渡し
+
+```typescript
+it("should fail when API key is not set", async () => {
+  // 明示的に空文字列を渡してテスト
+  const client = createTavilyClient({ apiKey: "" });
+  const result = await client.searchToken(input);
+  expect(result.isErr()).toBe(true);
+});
+```
+
+#### ❌ 悪い例: グローバル状態への依存
+
+```typescript
+it("should fail when API key is not set", async () => {
+  // グローバル状態を変更（他のテストに影響する可能性）
+  delete process.env.TAVILY_API_KEY;
+  const client = createTavilyClient();
+  // env.ts のモジュールキャッシュにより期待通り動作しない
+});
+```
+
+### 外部ライブラリの型定義変更への対応
+
+#### 依存ライブラリ更新時のチェックリスト
+
+```bash
+# 1. 依存関係を更新
+bun update
+
+# 2. 型エラーを即座に検出
+bun run typecheck
+
+# 3. テストの互換性確認
+bun run test
+
+# 4. すべて成功したらコミット
+git add package.json bun.lockb
+git commit -m "chore: update dependencies"
+```
+
+#### モックデータの型定義を最新に保つ
+
+```typescript
+// CoinGecko API の型が変更された場合
+const mockResponse: CoinsMarketsResponse = [
+  {
+    id: "bitcoin",
+    symbol: "btc",
+    name: "Bitcoin",
+    // 型定義の変更に追従
+    max_supply: null, // number → number | null
+    ath_date: new Date("2021-11-10T14:24:11.849Z"), // string → Date
+    atl_date: new Date("2013-07-06T00:00:00.000Z"),
+    last_updated: new Date("2025-11-21T00:00:00.000Z"),
+  },
+];
+```
+
+### 型アサーションの使用ガイドライン
+
+#### @ts-expect-error の適切な使用
+
+```typescript
+// ✅ 良い例: 理由を明記
+// @ts-expect-error - Cloudflare Workers types mismatch between test and runtime
+const client = createWorkersAiClient({ aiBinding: mockAiBinding });
+
+// ✅ 良い例: テスト用の型互換性問題
+// @ts-expect-error - BunSQLiteDatabase type mismatch but works at runtime
+repository = new MarketSnapshotsRepository(db as any);
+```
+
+#### as any の使用は最小限に
+
+```typescript
+// ❌ 避ける: 理由なく as any を使用
+const result = someFunction() as any;
+
+// ✅ 良い例: 具体的な型を指定
+const result = someFunction() as SpecificType;
+
+// ✅ より良い例: unknown を経由して安全に変換
+const result = someFunction() as unknown as SpecificType;
+```
+
+### モックのクリーンアップ
+
+**重要**: Bunでは `mock.restore()` だけでは不十分な場合があります。`tests/mocks/**` のヘルパを使う場合は、各ヘルパの `restore*()` を明示的に呼び出してください。
+
+```typescript
+import { beforeEach, afterEach } from "bun:test";
+import { setupLoggerMock, restoreLogger } from "../mocks/logger";
+import { setupTelegramMock, restoreTelegram } from "../mocks/telegram";
+import { setupFetchMock, restoreFetch } from "../mocks/fetch";
+
+beforeEach(() => {
+  // テストごとにモックをセットアップ
+  setupLoggerMock();
+  setupTelegramMock();
+  setupFetchMock();
+});
+
+afterEach(() => {
+  // 必ずrestore（順序は逆順が安全）
+  restoreFetch();
+  restoreTelegram();
+  restoreLogger();
+
+  // 念のため全体もrestore
+  mock.restore();
+  mock.clearAllMocks();
+});
+```
+
+#### ✅ 良い例: cleanupヘルパを使う
+
+```typescript
+import { createCleanup } from "../mocks/cleanup";
+import { setupLoggerMock, restoreLogger } from "../mocks/logger";
+import { setupTelegramMock, restoreTelegram } from "../mocks/telegram";
+
+describe("my test", () => {
+  const cleanup = createCleanup();
+
+  beforeEach(() => {
+    cleanup.add(() => restoreLogger());
+    cleanup.add(() => restoreTelegram());
+    setupLoggerMock();
+    setupTelegramMock();
+  });
+
+  afterEach(() => {
+    cleanup.run(); // すべてのcleanup関数を実行
+  });
+});
+```
+
+## Bun Mock Isolation問題の詳細
+
+詳細は [docs/test/bun-test-mock-isolation.md](../docs/test/bun-test-mock-isolation.md) を参照してください。
+
+### 主な問題点
+
+1. **`mock.module()` はモジュール単位でグローバルに効く**
+   - 一度モックすると、他のテストファイルにも影響
+   - `mock.restore()` や `jest.restoreAllMocks()` でも完全に復元できないケースが多い
+
+2. **`spyOn` もテスト間で漏れる**
+   - `afterEach` で明示的に `mockRestore()` しないと、次のテストに影響
+
+3. **並列実行と順序ランダム化で顕在化**
+   - `--randomize` で順序が変わると、普段は見えない依存関係が露呈
+
+### 検証コマンド
+
+```bash
+# 順序ランダム化でフレーク検出
+bun test tests/unit --preload=./tests/preload.ts --randomize --seed=1
+bun test tests/unit --preload=./tests/preload.ts --randomize --seed=2
+bun test tests/unit --preload=./tests/preload.ts --randomize --seed=3
+
+# 各テストを複数回実行してフレーク検出
+bun test tests/unit --preload=./tests/preload.ts --rerun-each 20
+```
+
+## 参考リンク
+
+- [Bun Test Mocks Documentation](https://bun.com/docs/test/mocks)
+- [Bun Mock Functions Guide](https://bun.com/docs/guides/test/mock-functions)
+- [Bun Test Mock Isolation 問題と対策](../docs/test/bun-test-mock-isolation.md)
+- [oven-sh/bun#6040](https://github.com/oven-sh/bun/issues/6040) - mock/spyOnがリセットされない
+- [oven-sh/bun#12823](https://github.com/oven-sh/bun/issues/12823) - mock.moduleのrestoreが隔離されない
+- [oven-sh/bun#7823](https://github.com/oven-sh/bun/issues/7823) - モジュールモックが競合する
+- [oven-sh/bun#7376](https://github.com/oven-sh/bun/issues/7376) - モックされたモジュールが競合する
+- [oven-sh/bun#18900](https://github.com/oven-sh/bun/issues/18900) - CIとローカルで順序が異なる

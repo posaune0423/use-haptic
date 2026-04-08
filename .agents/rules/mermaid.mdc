@@ -1,0 +1,39 @@
+---
+description:
+globs: *.md,*.mmd
+alwaysApply: false
+---
+
+Rule Name: mermaid
+Description: Mermaid Diagram Syntax and Best Practices
+
+## Syntax Pitfalls & Rules
+
+- **Parentheses/Spaces/Special Chars in Labels:** When using parentheses `()`, spaces, or special characters like `:` or `#` inside node labels (`[]`, `""`, `()`, `{}` etc.), always enclose the _entire_ label text in double quotes `""`.
+  - Correct (Flowchart): `A["Node text with (parentheses)"] --> B`
+  - Correct (Flowchart): `Cron_Twitter["fa:fa-clock Schedule: Twitter Scrape (5m)"]`
+  - Incorrect: `A[Node text with (parentheses)] --> B`
+- **Keywords:** Avoid using Mermaid keywords like `graph`, `subgraph`, `end`, `click`, `linkStyle`, `style`, `classDef`, `class` as plain text within labels unless quoted. The word `end` is particularly problematic in Flowcharts; use `End` or `END` if needed, or quote it (`"end"`).
+- **Comments:** Use `%%` to start comments. Comments **must** be placed at the beginning of a line.
+- **Node IDs:** Use simple alphanumeric characters and underscores (`_`) for node IDs. Avoid special characters or spaces. Keep them concise and meaningful.
+- **Node Label Formatting (HTML/Markdown):** **Avoid** embedding HTML tags (`<strong>`, `<span>`) or complex Markdown directly within node labels (e.g., `Node["<strong>Bold Text</strong>"]`). This is **not standard Mermaid syntax** and relies heavily on specific renderer capabilities (like VS Code extensions allowing `htmlLabels`). It will likely break rendering in other environments (GitHub Markdown, Mermaid Live Editor, etc.). Use standard text or Mermaid's Markdown string feature (` ``` `) if supported and necessary.
+
+## Best Practices & Features
+
+- **Clarity & Focus:** Use clear, concise node descriptions and link labels. Keep diagrams focused on a specific aspect. Break down complex systems into multiple diagrams.
+- **Structure:** Use subgraphs (`subgraph ... end`) in Flowcharts (`graph`) to group related nodes. Use `group ... in ...` for `architecture-beta`.
+- **Layout (Flowchart):** Experiment with `graph TD/LR/etc.` directions. Use invisible links (`~~~`) sparingly to adjust layout if necessary.
+- **Styling (Flowchart):** `classDef` and `class` are useful for styling in Flowcharts. Ensure color contrast for light/dark themes.
+- **Icons & Images:**
+  - **Font Awesome (`fa:`):** Generally the **most compatible** way to add icons across different environments, _provided_ the environment loads the Font Awesome CSS. Syntax: `NodeId["fa:fa-icon Label Text"]`.
+  - **Built-in Icons (`architecture-beta`):** This diagram type has a few built-in icons like `cloud`, `database`, `server`, `disk`, `internet`. These are reliable within `architecture-beta`. Syntax: `service myService(iconName)[Label]`.
+  - **Image URLs (`@{ img: ... }` in Flowchart):** Embedding external images can work but depends on the renderer's ability to fetch and display them. Syntax: `NodeId@{ img: "URL", ... }`.
+  - **Iconify/Prefixed Icons (`logos:`, `simple-icons:`, etc.):** **Use with caution.** These often require specific extensions (like `vscode-markdown-mermaid`) or environment setup (registering icon packs). They are **not guaranteed** to work universally (e.g., in standard GitHub Markdown or the Mermaid Live Editor). The `@icon` syntax (`NodeId@{ icon: "pack:name" }`) in newer Flowchart versions also falls into this category. **For broad compatibility, prefer `fa:` or basic built-in icons.**
+- **`architecture-beta` Diagram Type:**
+  - **Stability:** It's a newer (beta) type. While powerful for showing service relationships, its syntax (especially for icons and edges out of groups) might be less stable or consistently supported across all renderers compared to standard Flowcharts (`graph TD/LR`).
+  - **Validation:** Use the Mermaid Live Editor to validate the syntax, but be aware that rendering might still differ in other environments. If errors occur or rendering is inconsistent, consider reverting to a standard Flowchart (`graph TD/LR`).
+- **Validation & Debugging:**
+  - **Mermaid Live Editor:** [https://mermaid.live](mdc:https:/mermaid.live) is the **primary tool** for validating standard Mermaid syntax. Paste your code there first to check for basic errors.
+  - **Extension-Specific Features:** Be mindful that features working in a specific editor extension (like VS Code's preview) might not be standard Mermaid and won't work elsewhere. Test in the Live Editor or target environment (e.g., GitHub) to confirm.
+  - **Simplify:** If errors occur, simplify the diagram. Remove icons, complex labels, or specific features one by one to isolate the problem. Start with basic nodes and edges.
+- **Official Docs:** Refer to the official [Mermaid documentation](mdc:https:/mermaid.js.org) for the latest standard syntax and features.

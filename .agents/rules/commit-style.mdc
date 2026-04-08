@@ -1,0 +1,59 @@
+---
+description: Commit message format and conventions
+alwaysApply: false
+globs: ["**/.claude/commands/**", "**/lefthook.yml"]
+---
+
+# Commit Style
+
+Use this format when committing changes (e.g. via `agent-commit-push`, `worktree-pr`, or manual commits).
+
+## Message Format
+
+```
+${emoji} ${type}(${scope}): ${summary}
+
+- ${change_detail_1}
+- ${change_detail_2}
+```
+
+## Type → Emoji Mapping
+
+| type     | emoji | usage                       |
+| -------- | ----- | --------------------------- |
+| chore    | 🍱    | config, dependencies, build |
+| docs     | 📝    | documentation               |
+| style    | 💄    | formatting, UI              |
+| refactor | ♻️    | refactoring                 |
+| perf     | 🚀    | performance improvement     |
+| feat     | ✨    | new feature                 |
+| fix      | 🐛    | bug fix                     |
+| test     | 💚    | tests                       |
+
+## Commit Order
+
+`chore → docs → style → refactor → perf → feat → fix → test`
+
+## Scope Guidelines
+
+- `db` — schema, migrations, D1/Drizzle
+- `api` or `server` — API routes, server logic
+- `web` or `app` — pages, components, client UI
+- `infra` — docker, .github/, wrangler, deployment
+- `deps` — package.json, lockfiles
+- `openclaw` — OpenClaw/Moltworker agent prompts and config
+- When changes span multiple scopes: pick the most impactful scope, or use `core`
+
+## Commands (agent commits only)
+
+Set `GIT_AUTHOR_*` / `GIT_COMMITTER_*` to your agent identity before commit:
+
+```bash
+git add -A -- ${file1} ${file2} ${fileN}
+GIT_AUTHOR_NAME="..." GIT_AUTHOR_EMAIL="..." GIT_COMMITTER_NAME="..." GIT_COMMITTER_EMAIL="..." git commit -m "${emoji} ${type}(${scope}): ${summary}" -m "- ${detail1}\n- ${detail2}"
+```
+
+## Staging Rules
+
+- Follow `.gitignore` strictly. Never stage `.env`, `.cursor/**` (except commands), credentials
+- Group by intent/responsibility, not only by folder
