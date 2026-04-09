@@ -81,7 +81,7 @@ describe("useHaptic", () => {
     }
   });
 
-  it("does not create an iOS overlay for a hidden target", () => {
+  it("hides the iOS overlay when the target is ineligible", () => {
     const originalUserAgent = globalThis.navigator.userAgent;
     setUserAgent(
       "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)",

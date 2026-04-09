@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./style.css";
 import { useHaptic } from "use-haptic";
 
@@ -7,15 +7,34 @@ export const HapticButton = () => {
   const [duration, setDuration] = useState(5000);
   const [interval, setInterval] = useState(100);
   const { ref, triggerHaptic } = useHaptic();
+  const timeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleLegacyClick = () => {
+    if (timeoutRef.current !== null) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
     if (isContinuous) {
       const startTime = Date.now();
 
       const continuousVibration = () => {
         if (Date.now() - startTime < duration) {
           triggerHaptic();
-          setTimeout(continuousVibration, interval);
+          timeoutRef.current = setTimeout(
+            continuousVibration,
+            Math.max(interval, 16),
+          );
+        } else {
+          timeoutRef.current = null;
         }
       };
 

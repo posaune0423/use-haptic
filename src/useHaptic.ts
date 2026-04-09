@@ -62,6 +62,7 @@ const syncOverlayPosition = (
   input.style.opacity = "0";
   input.style.pointerEvents = "auto";
   input.style.display = "block";
+  input.style.cursor = globalThis.getComputedStyle(target).cursor || "auto";
   input.style.zIndex = OVERLAY_Z_INDEX;
 };
 
@@ -96,7 +97,8 @@ export const useHaptic = (
     document.body.appendChild(input);
 
     const sync = () => syncOverlayPosition(input, target);
-    const handleOverlayClick = () => {
+    const handleOverlayClick = (event: Event) => {
+      event.preventDefault();
       target.click();
     };
 
