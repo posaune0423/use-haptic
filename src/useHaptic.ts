@@ -1,68 +1,145 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { detectiOS } from "./utils.ts";
 
 const HAPTIC_DURATION = 5;
+const OVERLAY_DATA_ATTRIBUTE = "data-use-haptic-overlay";
+const OVERLAY_Z_INDEX = "2147483647";
+
+type HapticTarget = HTMLElement & { disabled?: boolean; click: () => void };
+
+export type UseHapticResult = {
+  ref: (node: HTMLElement | null) => void;
+  triggerHaptic: () => void;
+};
+
+const isTargetEligible = (target: HapticTarget): boolean => {
+  if (!document.body.contains(target)) {
+    return false;
+  }
+
+  if ("disabled" in target && Boolean(target.disabled)) {
+    return false;
+  }
+
+  if (target.getAttribute("aria-hidden") === "true") {
+    return false;
+  }
+
+  const computedStyle = globalThis.getComputedStyle(target);
+  if (
+    computedStyle.display === "none" ||
+    computedStyle.visibility === "hidden" ||
+    computedStyle.pointerEvents === "none"
+  ) {
+    return false;
+  }
+
+  const rect = target.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0;
+};
+
+const hideOverlay = (input: HTMLInputElement) => {
+  input.style.display = "none";
+  input.style.pointerEvents = "none";
+};
+
+const syncOverlayPosition = (
+  input: HTMLInputElement,
+  target: HapticTarget,
+) => {
+  if (!isTargetEligible(target)) {
+    hideOverlay(input);
+    return;
+  }
+
+  const rect = target.getBoundingClientRect();
+  input.style.position = "fixed";
+  input.style.left = `${rect.left}px`;
+  input.style.top = `${rect.top}px`;
+  input.style.width = `${rect.width}px`;
+  input.style.height = `${rect.height}px`;
+  input.style.margin = "0";
+  input.style.opacity = "0";
+  input.style.pointerEvents = "auto";
+  input.style.display = "block";
+  input.style.cursor = globalThis.getComputedStyle(target).cursor || "auto";
+  input.style.zIndex = OVERLAY_Z_INDEX;
+};
 
 /**
- * React hook for triggering haptic feedback on mobile devices
+ * React hook for mobile haptic feedback.
  *
- * This hook creates hidden DOM elements to trigger haptic feedback using the `input[switch]`
- * element for iOS devices and falls back to the Vibration API for other supported devices.
- *
- * @param {number} duration - The duration of the vibration in milliseconds (default: 5ms)
- * @returns {Object} An object containing the `triggerHaptic` function to trigger haptic feedback
- *
- * @example
- * ```tsx
- * import { useHaptic } from "use-haptic";
- *
- * function HapticButton() {
- *   const { triggerHaptic } = useHaptic(200); // 200ms vibration
- *   return <button onClick={triggerHaptic}>Vibrate</button>;
- * }
- * ```
+ * On iOS Safari, attach `ref` to the pressed element so the hook can place a
+ * transparent native `input[switch]` over it. On Android and other browsers,
+ * `triggerHaptic()` continues to use the Vibration API programmatically.
  */
 export const useHaptic = (
   duration = HAPTIC_DURATION,
-): { triggerHaptic: () => void } => {
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const labelRef = useRef<HTMLLabelElement | null>(null);
+): UseHapticResult => {
+  const [target, setTarget] = useState<HapticTarget | null>(null);
   const isIOS = useMemo(() => detectiOS(), []);
 
+  const ref = useCallback((node: HTMLElement | null) => {
+    setTarget(node as HapticTarget | null);
+  }, []);
+
   useEffect(() => {
-    // Create and append input element
+    if (!isIOS || !target) {
+      return;
+    }
+
     const input = document.createElement("input");
     input.type = "checkbox";
-    input.id = "haptic-switch";
+    input.tabIndex = -1;
     input.setAttribute("switch", "");
-    input.style.display = "none";
+    input.setAttribute("aria-hidden", "true");
+    input.setAttribute(OVERLAY_DATA_ATTRIBUTE, "true");
     document.body.appendChild(input);
-    inputRef.current = input;
 
-    // Create and append label element
-    const label = document.createElement("label");
-    label.htmlFor = "haptic-switch";
-    label.style.display = "none";
-    document.body.appendChild(label);
-    labelRef.current = label;
-
-    // Cleanup function
-    return () => {
-      document.body.removeChild(input);
-      document.body.removeChild(label);
+    const sync = () => syncOverlayPosition(input, target);
+    const handleOverlayClick = (event: Event) => {
+      event.preventDefault();
+      target.click();
     };
-  }, []);
+
+    input.addEventListener("click", handleOverlayClick);
+
+    const resizeObserver = typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(sync)
+      : null;
+    resizeObserver?.observe(target);
+
+    const mutationObserver = typeof MutationObserver !== "undefined"
+      ? new MutationObserver(sync)
+      : null;
+    mutationObserver?.observe(target, {
+      attributes: true,
+      childList: false,
+      subtree: false,
+    });
+
+    globalThis.addEventListener("scroll", sync, true);
+    globalThis.addEventListener("resize", sync);
+
+    sync();
+
+    return () => {
+      globalThis.removeEventListener("scroll", sync, true);
+      globalThis.removeEventListener("resize", sync);
+      mutationObserver?.disconnect();
+      resizeObserver?.disconnect();
+      input.removeEventListener("click", handleOverlayClick);
+      input.remove();
+    };
+  }, [isIOS, target]);
 
   const triggerHaptic = useCallback(() => {
     if (!isIOS && navigator?.vibrate) {
       navigator.vibrate(duration);
-    } else {
-      labelRef.current?.click();
     }
-  }, [isIOS, duration]);
+  }, [duration, isIOS]);
 
-  return { triggerHaptic };
+  return { ref, triggerHaptic };
 };
 
-// For backwards compatibility
 export default useHaptic;

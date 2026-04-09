@@ -31,11 +31,18 @@
 
 This package utilizes the `input[switch]` element introduced in
 [Safari 18.0](https://webkit.org/blog/15865/webkit-features-in-safari-18-0/) to
-trigger haptic feedback anytime, anywhere in your React application.
+trigger haptic feedback in React applications.
+
+On current iOS / WebKit, arbitrary programmatic haptic triggering is no longer
+reliable. The supported path is to let the user directly interact with a native
+`input[switch]`. `useHaptic()` now reflects that:
+
+- On iOS Safari, attach `ref` to the pressed element
+- On Android and other browsers, keep using `triggerHaptic()`
 
 ## 🚀 Features
 
-- ✅ Trigger haptic feedback at any time in your React application
+- ✅ Attach haptic behavior to any single React DOM target with `ref`
 - ✅ Support iOS, Android
 - ✅ Simple, intuitive API
 - ✅ Native TypeScript support by 🦕
@@ -70,10 +77,46 @@ deno add jsr:@posaune0423/use-haptic
 import { useHaptic } from "use-haptic";
 
 function HapticButton() {
-  const { triggerHaptic } = useHaptic();
-  return <button onClick={triggerHaptic}>Feel Haptic</button>;
+  const { ref } = useHaptic();
+
+  return (
+    <button onClick={() => console.log("pressed")} ref={ref} type="button">
+      Feel Haptic
+    </button>
+  );
 }
 ```
+
+The hook places a transparent native `input[switch]` on top of the referenced
+element so Safari treats the interaction as a direct switch press.
+
+One `useHaptic()` instance manages one DOM target. If you need haptics on
+multiple elements, call the hook separately for each one.
+
+## Android / Programmatic Trigger
+
+```tsx
+import { useHaptic } from "use-haptic";
+
+function AndroidButton() {
+  const { triggerHaptic } = useHaptic();
+
+  return (
+    <button
+      onClick={() => {
+        triggerHaptic();
+      }}
+      type="button"
+    >
+      Vibrate
+    </button>
+  );
+}
+```
+
+`triggerHaptic()` still uses `navigator.vibrate()` on non-iOS browsers, but it
+should no longer be considered a reliable arbitrary-trigger API on modern iOS
+Safari.
 
 ## 🏃‍♂️ Quick Start
 

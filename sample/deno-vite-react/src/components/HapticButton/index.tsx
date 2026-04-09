@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./style.css";
 import { useHaptic } from "use-haptic";
 
@@ -6,16 +6,35 @@ export const HapticButton = () => {
   const [isContinuous, setIsContinuous] = useState(false);
   const [duration, setDuration] = useState(5000);
   const [interval, setInterval] = useState(100);
-  const { triggerHaptic } = useHaptic();
+  const { ref, triggerHaptic } = useHaptic();
+  const timeoutRef = useRef<number | null>(null);
 
-  const handleClick = () => {
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleLegacyClick = () => {
+    if (timeoutRef.current !== null) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
     if (isContinuous) {
       const startTime = Date.now();
 
       const continuousVibration = () => {
         if (Date.now() - startTime < duration) {
           triggerHaptic();
-          setTimeout(continuousVibration, interval);
+          timeoutRef.current = setTimeout(
+            continuousVibration,
+            Math.max(interval, 16),
+          );
+        } else {
+          timeoutRef.current = null;
         }
       };
 
@@ -27,8 +46,20 @@ export const HapticButton = () => {
 
   return (
     <div className="haptic-btn-container">
-      <button className="haptic-btn" onClick={handleClick} type="button">
-        Feel Haptic !!!
+      <button
+        className="haptic-btn"
+        onClick={() => console.log("ref-based haptic target")}
+        ref={ref}
+        type="button"
+      >
+        iOS Ref Haptic
+      </button>
+      <button
+        className="haptic-btn legacy-btn"
+        onClick={handleLegacyClick}
+        type="button"
+      >
+        Android triggerHaptic()
       </button>
       <label>
         <input
