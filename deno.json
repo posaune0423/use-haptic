@@ -7,6 +7,8 @@
     "@std/assert": "jsr:@std/assert@^1.0.19",
     "@std/testing": "jsr:@std/testing@^1.0.17",
     "@testing-library/react": "npm:@testing-library/react@^16.3.2",
+    "@types/react": "npm:@types/react@^19.1.0",
+    "@types/react/jsx-runtime": "npm:@types/react@^19.1.0/jsx-runtime",
     "global-jsdom": "npm:global-jsdom@24",
     "react": "npm:react@^19.2.5",
     "react-dom": "npm:react-dom@^19.2.5"

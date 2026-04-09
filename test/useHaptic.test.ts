@@ -3,69 +3,139 @@ jsdom();
 
 import { assertEquals } from "@std/assert";
 import { describe, it } from "@std/testing/bdd";
-import { assertSpyCall, assertSpyCalls, spy } from "@std/testing/mock";
-import { renderHook } from "@testing-library/react";
+import { assertSpyCalls, spy } from "@std/testing/mock";
+import { act, renderHook } from "@testing-library/react";
 import useHaptic from "../src/useHaptic.ts";
 
+const OVERLAY_SELECTOR = "input[data-use-haptic-overlay='true']";
+
+const setUserAgent = (value: string) => {
+  Object.defineProperty(globalThis.navigator, "userAgent", {
+    configurable: true,
+    value,
+  });
+};
+
+const mockRect = (element: HTMLElement) => {
+  Object.defineProperty(element, "getBoundingClientRect", {
+    configurable: true,
+    value: () => ({
+      bottom: 60,
+      height: 40,
+      left: 10,
+      right: 110,
+      top: 20,
+      width: 100,
+      x: 10,
+      y: 20,
+      toJSON: () => "",
+    }),
+  });
+};
+
 describe("useHaptic", () => {
-  it("elements are added on mount and removed on unmount", () => {
-    // wrap document.body.appendChild and removeChild with spy
-    const appendChildSpy = spy(document.body, "appendChild");
-    const removeChildSpy = spy(document.body, "removeChild");
+  it("creates an iOS overlay for the referenced target and forwards clicks", () => {
+    const originalUserAgent = globalThis.navigator.userAgent;
+    setUserAgent(
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)",
+    );
+
+    const target = document.createElement("button");
+    document.body.appendChild(target);
+    mockRect(target);
+
+    const targetClickSpy = spy(target, "click");
 
     try {
-      // render useHaptic hook
-      const { unmount } = renderHook(() => useHaptic());
+      const { result, unmount } = renderHook(() => useHaptic());
 
-      // verify appendChild is called 3 times
-      assertSpyCalls(appendChildSpy, 3);
+      act(() => {
+        result.current.ref(target);
+      });
 
-      // verify tagName of each added element
-      const firstElement = appendChildSpy.calls[0].args[0] as HTMLElement;
-      const secondElement = appendChildSpy.calls[1].args[0] as HTMLElement;
-      const thirdElement = appendChildSpy.calls[2].args[0] as HTMLElement;
+      const overlay = document.querySelector(OVERLAY_SELECTOR) as
+        | HTMLInputElement
+        | null;
+      if (!overlay) {
+        throw new Error("overlay not found");
+      }
 
-      assertEquals(firstElement.tagName, "DIV");
-      assertEquals(secondElement.tagName, "INPUT");
-      assertEquals(thirdElement.tagName, "LABEL");
+      assertEquals(overlay.getAttribute("switch"), "");
+      assertEquals(overlay.style.position, "fixed");
+      assertEquals(overlay.style.left, "10px");
+      assertEquals(overlay.style.top, "20px");
+      assertEquals(overlay.style.width, "100px");
+      assertEquals(overlay.style.height, "40px");
+      assertEquals(overlay.style.opacity, "0");
+      assertEquals(overlay.style.pointerEvents, "auto");
 
-      // unmount hook
+      overlay.click();
+      assertSpyCalls(targetClickSpy, 1);
+
       unmount();
-
-      // verify removeChild is called 2 times after unmount
-      assertSpyCalls(removeChildSpy, 2);
+      assertEquals(document.querySelector(OVERLAY_SELECTOR), null);
     } finally {
-      // restore spy
-      appendChildSpy.restore();
-      removeChildSpy.restore();
+      targetClickSpy.restore();
+      target.remove();
+      setUserAgent(originalUserAgent);
     }
   });
 
-  it("label click is executed when triggerHaptic() is called", () => {
-    // render useHaptic hook
-    const { result } = renderHook(() => useHaptic());
+  it("does not create an iOS overlay for a hidden target", () => {
+    const originalUserAgent = globalThis.navigator.userAgent;
+    setUserAgent(
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)",
+    );
 
-    // get label element added to document.body
-    const label = document.querySelector('label[for="haptic-switch"]') as
-      | HTMLLabelElement
-      | null;
-    if (!label) {
-      throw new Error("label not found");
-    }
-
-    // wrap label.click with spy
-    const labelClickSpy = spy(label, "click");
+    const target = document.createElement("div");
+    target.style.display = "none";
+    document.body.appendChild(target);
+    mockRect(target);
 
     try {
-      // call vibe()
+      const { result, unmount } = renderHook(() => useHaptic());
+
+      act(() => {
+        result.current.ref(target);
+      });
+
+      const overlay = document.querySelector(OVERLAY_SELECTOR) as
+        | HTMLInputElement
+        | null;
+      if (!overlay) {
+        throw new Error("overlay not found");
+      }
+
+      assertEquals(overlay.style.display, "none");
+      assertEquals(overlay.style.pointerEvents, "none");
+      unmount();
+      assertEquals(document.querySelector(OVERLAY_SELECTOR), null);
+    } finally {
+      target.remove();
+      setUserAgent(originalUserAgent);
+    }
+  });
+
+  it("uses navigator.vibrate on non-iOS when triggerHaptic() is called", () => {
+    const originalUserAgent = globalThis.navigator.userAgent;
+    const originalVibrate = navigator.vibrate;
+    setUserAgent("Mozilla/5.0 (Linux; Android 15)");
+
+    navigator.vibrate = (() => true) as typeof navigator.vibrate;
+    const vibrateSpy = spy(navigator, "vibrate");
+
+    try {
+      const { result } = renderHook(() => useHaptic());
+
       result.current.triggerHaptic();
 
-      // verify label.click is called 1 time
-      assertSpyCalls(labelClickSpy, 1);
-      // verify arguments of call
-      assertSpyCall(labelClickSpy, 0, { args: [] });
+      assertSpyCalls(vibrateSpy, 1);
+      assertEquals(vibrateSpy.calls[0].args[0] as unknown, 5);
+      assertEquals(document.querySelector(OVERLAY_SELECTOR), null);
     } finally {
-      labelClickSpy.restore();
+      vibrateSpy.restore();
+      navigator.vibrate = originalVibrate;
+      setUserAgent(originalUserAgent);
     }
   });
 });

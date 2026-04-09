@@ -6,9 +6,10 @@ export const HapticButton = () => {
   const [isContinuous, setIsContinuous] = useState(false);
   const [duration, setDuration] = useState(5000);
   const [interval, setInterval] = useState(100);
+  const { ref } = useHaptic();
   const { triggerHaptic } = useHaptic();
 
-  const handleClick = () => {
+  const handleLegacyClick = () => {
     if (isContinuous) {
       const startTime = Date.now();
 
@@ -27,8 +28,20 @@ export const HapticButton = () => {
 
   return (
     <div className="haptic-btn-container">
-      <button className="haptic-btn" onClick={handleClick} type="button">
-        Feel Haptic !!!
+      <button
+        className="haptic-btn"
+        onClick={() => console.log("ref-based haptic target")}
+        ref={ref}
+        type="button"
+      >
+        iOS Ref Haptic
+      </button>
+      <button
+        className="haptic-btn legacy-btn"
+        onClick={handleLegacyClick}
+        type="button"
+      >
+        Android triggerHaptic()
       </button>
       <label>
         <input
