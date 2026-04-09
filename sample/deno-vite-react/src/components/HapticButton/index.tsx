@@ -6,8 +6,7 @@ export const HapticButton = () => {
   const [isContinuous, setIsContinuous] = useState(false);
   const [duration, setDuration] = useState(5000);
   const [interval, setInterval] = useState(100);
-  const { ref } = useHaptic();
-  const { triggerHaptic } = useHaptic();
+  const { ref, triggerHaptic } = useHaptic();
 
   const handleLegacyClick = () => {
     if (isContinuous) {
